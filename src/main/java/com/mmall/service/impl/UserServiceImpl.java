@@ -35,16 +35,21 @@ public class UserServiceImpl implements IUserService {
         return ServerResponse.createBySuccess("登录成功",user);
     }
 
+    public static void main(String[] args) {
+        //427338237BD929443EC5D48E24FD2B1A
+        String md5Password=MD5Util.MD5EncodeUtf8("admin");
+        System.out.printf("md5Password:"+md5Password);
+    }
+
     @Override
     public ServerResponse<String> register(User user){
-        int resultCount=userMapper.checkUsername(user.getUsername());
 
-        ServerResponse validResponse=this.checkValid(user.getUsername(),Const.CURRENT_USER);
-        if (validResponse.isSuccess()){
+        ServerResponse validResponse=this.checkValid(user.getUsername(),Const.USERNAME);
+        if (!validResponse.isSuccess()){
             return validResponse;
         }
         validResponse=this.checkValid(user.getEmail(),Const.EMAIL);
-        if (validResponse.isSuccess()){
+        if (!validResponse.isSuccess()){
             return validResponse;
         }
 
@@ -53,7 +58,7 @@ public class UserServiceImpl implements IUserService {
         //md5加密
         user.setPassword(MD5Util.MD5EncodeUtf8(user.getPassword()));
 
-        resultCount=userMapper.insert(user);
+        int resultCount=userMapper.insert(user);
         if (resultCount==0){
             return ServerResponse.createByErrorMessage("注册失败");
         }
@@ -123,7 +128,7 @@ public class UserServiceImpl implements IUserService {
         }
         if(StringUtils.equals(forgetToken,token)){
             String md5Password=MD5Util.MD5EncodeUtf8(passwordNew);
-            int rowCount=userMapper.updatePasswordByUsername(username,passwordNew);
+            int rowCount=userMapper.updatePasswordByUsername(username,md5Password);
             if (rowCount>0){
                 return ServerResponse.createBySuccessMessage("修改密码成功");
             }
@@ -176,4 +181,20 @@ public class UserServiceImpl implements IUserService {
         user.setPassword(StringUtils.EMPTY);
         return ServerResponse.createBySuccess(user);
     }
+
+
+    //backend
+
+    /**
+     * 校验是否是管理员
+     * @param user
+     * @return
+     */
+    public ServerResponse checkAdminRole(User user){
+        if (user!=null && user.getRole().intValue()==Const.Role.ROLE_ADMIN){
+            return ServerResponse.createBySuccess();
+        }
+        return  ServerResponse.createByError();
+    }
+
 }
